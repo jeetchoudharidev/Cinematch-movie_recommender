@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from html import escape
 from pathlib import Path
 from typing import Any
 
@@ -103,7 +104,7 @@ def render_movie_card(movie: Any, score: float, number: int) -> None:
         else:
             st.markdown('<div class="poster-placeholder">🎬</div>', unsafe_allow_html=True)
 
-        title = str(movie.get("title", "Untitled"))
+        title = escape(str(movie.get("title", "Untitled")))
         st.markdown(f'<div class="movie-title">{number:02d} · {title}</div>', unsafe_allow_html=True)
         rating = movie.get("vote_average", 0)
         try:

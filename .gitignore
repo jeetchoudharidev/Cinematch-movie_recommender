@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# Generated model artifacts and datasets
+artifacts/
+data/
+tmdb_5000_movies.csv
+tmdb_5000_credits.csv
+*.joblib
+*.pkl
+
+# Streamlit
+.streamlit/secrets.toml

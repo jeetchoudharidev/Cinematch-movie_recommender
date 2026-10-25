@@ -40,13 +40,13 @@ Download the TMDB 5000 Movie Dataset and place these files in the project root o
 - `tmdb_5000_movies.csv`
 - `tmdb_5000_credits.csv`
 
-Then run `streamlit run app.py` again. You can also prebuild a compressed model artifact:
+Then run `streamlit run app.py` again. The dataset paths are ignored by Git to prevent accidentally committing large files, so only force-add the CSVs if the hosted app truly cannot download them. You can also prebuild a compressed model artifact:
 
 ```bash
 python build_model.py --output artifacts/movie_recommender.joblib
 ```
 
-The artifact is ignored by Git by default; it is optional and not required for the app to build the model automatically.
+The artifact is ignored by Git by default; it is optional and not required for the app to build the model automatically. To include it in a deployment, review its size and deliberately force-add it with `git add -f artifacts/movie_recommender.joblib`.
 
 ## Deploy on Streamlit Community Cloud
 

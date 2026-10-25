@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import requests
 import streamlit as st
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -62,11 +63,44 @@ def get_model() -> dict[str, Any]:
     return load_or_build_model(Path("artifacts/movie_recommender.joblib"))
 
 
-def poster_url(poster_path: Any) -> str | None:
-    if poster_path is None:
+@st.cache_data(ttl=86400, show_spinner=False)
+def fetch_tmdb_poster_path(movie_id: int, api_token: str) -> str | None:
+    """Fetch and cache a movie poster path from TMDB using its movie ID."""
+    if not api_token:
         return None
-    path = str(poster_path).strip()
+    try:
+        response = requests.get(
+            f"https://api.themoviedb.org/3/movie/{int(movie_id)}",
+            headers={
+                "Authorization": f"Bearer {api_token}",
+                "accept": "application/json",
+            },
+            timeout=8,
+        )
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        path = response.json().get("poster_path")
+        return path if isinstance(path, str) and path.startswith("/") else None
+    except (requests.RequestException, ValueError, TypeError):
+        return None
+
+
+def poster_url(poster_path: Any, movie_id: Any = None) -> str | None:
+    """Use the dataset poster first, then ask TMDB for a missing poster."""
+    path = "" if poster_path is None else str(poster_path).strip()
     if not path or path.lower() in {"nan", "none", "null"} or not path.startswith("/"):
+        path = ""
+        token = st.secrets.get("TMDB_API_TOKEN", "")
+        if token and movie_id is not None:
+            try:
+                if str(movie_id).strip().lower() not in {"", "nan", "none", "null"}:
+                    fetched_path = fetch_tmdb_poster_path(int(float(movie_id)), str(token))
+                    if fetched_path:
+                        path = fetched_path
+            except (TypeError, ValueError, OverflowError):
+                pass
+    if not path:
         return None
     return f"https://image.tmdb.org/t/p/w500{path}"
 
@@ -98,7 +132,7 @@ def find_recommendations(model: dict[str, Any], selected_index: int, count: int 
 
 def render_movie_card(movie: Any, score: float, number: int) -> None:
     with st.container(border=True):
-        image = poster_url(movie.get("poster_path", ""))
+        image = poster_url(movie.get("poster_path", ""), movie.get("id"))
         if image:
             st.image(image, use_container_width=True)
         else:
@@ -208,6 +242,6 @@ if "cine_recommendations" in st.session_state:
                     render_movie_card(movies.iloc[movie_index], score, position)
 
 st.markdown(
-    '<div class="footer">Built with Python · scikit-learn · Streamlit &nbsp;|&nbsp; Content similarity is a ranking signal, not a rating prediction.</div>',
+    '<div class="footer">Built with Python · scikit-learn · Streamlit · TMDB &nbsp;|&nbsp; Content similarity is a ranking signal, not a rating prediction.<br/>This product uses the TMDB API but is not endorsed or certified by TMDB.</div>',
     unsafe_allow_html=True,
 )

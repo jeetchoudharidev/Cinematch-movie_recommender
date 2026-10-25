@@ -70,3 +70,5 @@ Never put API keys or tokens in notebooks, source files, or frontend code. If a 
 4. Return the top five other titles with the highest similarity.
 
 The similarity score is a ranking signal based on metadata, not a prediction of a user's rating or a guarantee they will enjoy the film.
+
+## Poster Service by TMDB API
